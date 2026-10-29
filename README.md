@@ -278,3 +278,6 @@ After changing Netlify settings, trigger a production deploy from the latest `ma
 ## License
 
 This repository is released under the MIT license specified in `package.json`.
+
+
+**Important:** This is a Vite application, not a Next.js application. Do not attach or enable Netlify's `@netlify/plugin-nextjs` or the Next.js Runtime for this site. Netlify's UI-injected Next.js plugin can override the successful Vite build and fail because no Next.js build output exists. Keep the framework as Vite and publish the generated `dist/public` directory.
