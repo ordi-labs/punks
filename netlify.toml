@@ -1,0 +1,24 @@
+# Netlify deployment for the static Ordinal Punks Ledger.
+# Vite emits the client into dist/public; the Express server bundle (dist/index.js)
+# is only used for self-hosting and is not deployed here. Live data comes from the
+# Cloudflare worker configured via VITE_LIVE_DATA_URL.
+[build]
+  command = "pnpm run build"
+  publish = "dist/public"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=()"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+
+# Single-page app fallback for client-side routes.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
