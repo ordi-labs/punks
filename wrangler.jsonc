@@ -10,6 +10,11 @@
   "placement": {
     "mode": "smart",
   },
+  "previews": {
+    "placement": {
+      "mode": "smart",
+    },
+  },
   "observability": {
     "enabled": true,
     "head_sampling_rate": 0.1,
