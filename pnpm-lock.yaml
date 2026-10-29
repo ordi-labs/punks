@@ -5905,6 +5905,8 @@ snapshots:
 
   proxy-from-env@2.1.0: {}
 
+  range-parser@1.2.1: {}
+
   raw-body@3.0.2:
     dependencies:
       bytes: 3.1.2
