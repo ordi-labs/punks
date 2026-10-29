@@ -236,6 +236,35 @@ Pull requests are expected to pass the repository security, dependency, and Code
 
 Dependabot version-update and security-update pull requests are disabled by repository policy. GitHub vulnerability alerts remain enabled; manually maintained security and build checks continue to run.
 
+
+### Netlify deployment (ordi-punks.netlify.app)
+
+The repository also contains a Netlify configuration for the static frontend. The Netlify site **ordi-punks** should be connected to this repository and deploy the `main` production branch.
+
+Use these Netlify build settings:
+
+| Setting | Value |
+| --- | --- |
+| Base directory | Leave empty (repository root) |
+| Build command | `pnpm install --frozen-lockfile && pnpm run build` |
+| Publish directory | `dist/public` |
+| Functions directory | Leave empty; this frontend deployment does not require Netlify Functions |
+| Runtime | Node.js 22 |
+| Production branch | `main` |
+
+The repository pins pnpm in `package.json` as `pnpm@11.25.0`. Netlify should use the pinned package-manager version when supported by the build image. The Node.js version is also declared in `netlify.toml`.
+
+The Netlify configuration is maintained in the repository root:
+
+- `netlify.toml` — build command, publish directory, security headers, and SPA fallback.
+- `vite.config.ts` — uses `/` as the asset base for Netlify's domain root. The `/punks/` base is reserved for an explicitly selected GitHub Pages build via `DEPLOY_TARGET=github-pages`.
+
+The single-page application fallback is configured in `netlify.toml` and routes unknown frontend paths to `/index.html`. Do not add `client/` as the Netlify base directory or use `client/public` as the publish directory.
+
+Live market and wallet data continue to use the Cloudflare Worker configured through the build environment variable `VITE_LIVE_DATA_URL`. Configure that variable in Netlify with the intended public Worker base URL. Never put `UNISAT_API_KEY`, private keys, seed phrases, or other server secrets in a `VITE_*` variable or frontend build output. Keep provider secrets only in the Cloudflare Worker secret store.
+
+After changing Netlify settings, trigger a production deploy from the latest `main` commit and verify that the published deploy uses that commit. A successful GitHub Actions run alone does not prove that Netlify has published the same revision.
+
 ## Security and user-control principles
 
 - No wallet signature is requested merely to connect or inspect local metadata.
