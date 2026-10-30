@@ -45,6 +45,7 @@ jobs:
         run: pnpm run build
         env:
           GITHUB_ACTIONS: true
+          DEPLOY_TARGET: github-pages
 
       - name: Build desktop extension package
         run: pnpm run build:extension
