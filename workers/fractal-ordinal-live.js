@@ -11,6 +11,7 @@ const ALLOWED_ORIGINS = new Set([
   'https://pokemon-4nv.pages.dev',
   'https://ordi-punks.netlify.app',
   'https://deploy-preview-482--ordi-punks.netlify.app',
+  'https://punks-topaz.vercel.app',
 ]);
 
 // Browser extensions have a distinct, browser-assigned origin. Accept only canonical
