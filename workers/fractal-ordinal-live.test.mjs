@@ -2563,3 +2563,12 @@ test('accepts a Fractal UTXO only when the per-outpoint Rune balance is explicit
     assert.equal(data.diagnostics.hasRunes, 0);
   } finally { globalThis.fetch = previousFetch; }
 });
+
+
+test('allows the Ordinal Punks Netlify production and verified deploy-preview origins', async () => {
+  for (const origin of ['https://ordi-punks.netlify.app', 'https://deploy-preview-482--ordi-punks.netlify.app']) {
+    const response = await worker.fetch(makeRequest('/api/market?collectionId=invalid', { origin, ip: origin.includes('preview') ? '192.0.2.213' : '192.0.2.214' }), {});
+    assert.equal(response.headers.get('access-control-allow-origin'), origin);
+    assert.equal(response.headers.get('vary'), 'Origin');
+  }
+});
