@@ -1999,6 +1999,32 @@ test('BIP-322 challenge is origin-bound, short-lived, uncached, and stores only 
   assert.equal(JSON.stringify(state.challenge).includes(result.challengeId), false);
 });
 
+
+
+test('Punks BIP-322 sign-in and ownership challenges accept only the approved Vercel production origin', async () => {
+  const origin = 'https://punks-topaz.vercel.app';
+  const address = 'bc1q9vza2e8x573nczrlzms0wvx3gsqjx7vavgkx0l';
+  for (const path of ['/api/auth/challenge', '/api/auth/ownership/challenge']) {
+    const { binding, state } = createAuthStorageMock();
+    const response = await worker.fetch(makeRequest(path, {
+      method: 'POST', origin, ip: path.includes('ownership') ? '192.0.2.217' : '192.0.2.218',
+      body: JSON.stringify({ site: 'punks', address, network: 'BITCOIN_MAINNET' }),
+    }), { AUTH_STORAGE: binding });
+    const result = await response.json();
+    assert.equal(response.status, 200, JSON.stringify(result));
+    assert.equal(state.challenge.origin, origin);
+    assert.match(result.message, /punks-topaz\.vercel\.app/);
+    assert.match(result.message, /URI: https:\/\/punks-topaz\.vercel\.app\//);
+  }
+  const { binding } = createAuthStorageMock();
+  const denied = await worker.fetch(makeRequest('/api/auth/ownership/challenge', {
+    method: 'POST', origin: 'https://untrusted-vercel-project.vercel.app', ip: '192.0.2.219',
+    body: JSON.stringify({ site: 'punks', address, network: 'BITCOIN_MAINNET' }),
+  }), { AUTH_STORAGE: binding });
+  assert.equal(denied.status, 403);
+  assert.equal(await denied.text(), 'Forbidden');
+});
+
 test('sign-in challenges support Bitcoin and Fractal for both sites and stay bound to the requested network', async () => {
   const address = 'bc1q9vza2e8x573nczrlzms0wvx3gsqjx7vavgkx0l';
   for (const site of ['punks', 'pokedex']) {

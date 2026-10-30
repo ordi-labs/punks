@@ -4,15 +4,13 @@ import { Address, Verifier } from '@exodus/bip322-js';
 
 const AUTH_SITES = {
   punks: {
-    origin: 'https://ordi-labs.github.io',
-    domain: 'ordi-labs.github.io',
-    uri: 'https://ordi-labs.github.io/punks/',
+    allowedOrigins: new Set(['https://ordi-labs.github.io', 'https://punks-topaz.vercel.app']),
+    path: '/punks/',
     cookie: '__Host-demro-punks-auth',
   },
   pokedex: {
-    origin: 'https://ordi-labs.github.io',
-    domain: 'ordi-labs.github.io',
-    uri: 'https://ordi-labs.github.io/pokedex/',
+    allowedOrigins: new Set(['https://ordi-labs.github.io']),
+    path: '/pokedex/',
     cookie: '__Host-demro-pokedex-auth',
   },
 };
@@ -151,12 +149,14 @@ async function consumeDurableIpRate(env, request, action, now) {
 function siteForRequest(siteName, request) {
   const site = AUTH_SITES[siteName];
   const origin = request.headers.get('Origin') || '';
-  if (!site || origin !== site.origin) throw new AuthError('AUTH_ORIGIN_NOT_ALLOWED', 403);
-  return site;
+  if (!site || !site.allowedOrigins.has(origin)) throw new AuthError('AUTH_ORIGIN_NOT_ALLOWED', 403);
+  // Bind every challenge/session to the exact approved browser origin. The
+  // canonical GitHub Pages route and the Vercel production route are distinct
+  // relying-party URIs, even though they share the same Worker backend.
+  return { ...site, origin, domain: new URL(origin).host, uri: `${origin}${origin === 'https://ordi-labs.github.io' ? site.path : '/'}` };
 }
 
-function buildChallengeMessage(siteName, address, network, challengeId, issuedAt, expiresAt) {
-  const site = AUTH_SITES[siteName];
+function buildChallengeMessage(siteName, address, network, challengeId, issuedAt, expiresAt, site = AUTH_SITES[siteName]) {
   return [
     `${site.domain} requests a wallet sign-in`,
     `URI: ${site.uri}`,
@@ -170,8 +170,7 @@ function buildChallengeMessage(siteName, address, network, challengeId, issuedAt
   ].join('\n');
 }
 
-function buildOwnershipChallengeMessage(siteName, address, network, challengeId, issuedAt, expiresAt, contextHash = '') {
-  const site = AUTH_SITES[siteName];
+function buildOwnershipChallengeMessage(siteName, address, network, challengeId, issuedAt, expiresAt, contextHash = '', site = AUTH_SITES[siteName]) {
   const networkLabel = network === 'BITCOIN_MAINNET' ? 'Bitcoin mainnet' : 'Fractal Bitcoin mainnet';
   return [
     `${site.domain} requests a wallet ownership proof`,
@@ -289,7 +288,7 @@ async function createChallenge(request, env, headers) {
 
   return Response.json({
     challengeId,
-    message: buildChallengeMessage(siteName, body.address, body.network, challengeId, now, expiresAt),
+    message: buildChallengeMessage(siteName, body.address, body.network, challengeId, now, expiresAt, site),
     expiresAt: new Date(expiresAt).toISOString(),
     network: body.network,
     site: siteName,
@@ -315,7 +314,7 @@ async function verifyChallenge(request, env, headers) {
     throw new AuthError('AUTH_INVALID_CHALLENGE', 401);
   }
 
-  const message = buildChallengeMessage(siteName, body.address, body.network, body.challengeId, Number(challenge.issuedAt), Number(challenge.expiresAt));
+  const message = buildChallengeMessage(siteName, body.address, body.network, body.challengeId, Number(challenge.issuedAt), Number(challenge.expiresAt), site);
   let valid = false;
   try { valid = await Verifier.verifySignature(body.address, message, witness); } catch { valid = false; }
   if (!valid) throw new AuthError('AUTH_SIGNATURE_REJECTED', 401);
@@ -374,7 +373,7 @@ async function createOwnershipChallenge(request, env, headers) {
   if (!stored?.created) throw new AuthError('AUTH_STORAGE_UNAVAILABLE', 503);
   return Response.json({
     challengeId,
-    message: buildOwnershipChallengeMessage(siteName, body.address, body.network, challengeId, now, expiresAt, contextHash),
+    message: buildOwnershipChallengeMessage(siteName, body.address, body.network, challengeId, now, expiresAt, contextHash, site),
     expiresAt: new Date(expiresAt).toISOString(),
     network: body.network,
     site: siteName,
@@ -403,7 +402,7 @@ async function verifyOwnershipChallenge(request, env, headers) {
   }
   const witness = await decodeWitness(body.signature);
   if (!witness) throw new AuthError('AUTH_INVALID_SIGNATURE', 400);
-  const message = buildOwnershipChallengeMessage(siteName, body.address, body.network, body.challengeId, Number(challenge.issuedAt), Number(challenge.expiresAt), contextHash);
+  const message = buildOwnershipChallengeMessage(siteName, body.address, body.network, body.challengeId, Number(challenge.issuedAt), Number(challenge.expiresAt), contextHash, site);
   let valid = false;
   try { valid = await Verifier.verifySignature(body.address, message, witness); } catch { valid = false; }
   if (!valid) throw new AuthError('AUTH_SIGNATURE_REJECTED', 401);
