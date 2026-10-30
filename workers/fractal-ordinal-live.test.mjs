@@ -2022,7 +2022,7 @@ test('Punks BIP-322 sign-in and ownership challenges accept only the approved Ve
     body: JSON.stringify({ site: 'punks', address, network: 'BITCOIN_MAINNET' }),
   }), { AUTH_STORAGE: binding });
   assert.equal(denied.status, 403);
-  assert.equal((await denied.json()).code, 'AUTH_ORIGIN_NOT_ALLOWED');
+  assert.equal(await denied.text(), 'Forbidden');
 });
 
 test('sign-in challenges support Bitcoin and Fractal for both sites and stay bound to the requested network', async () => {
