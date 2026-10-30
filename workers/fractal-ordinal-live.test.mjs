@@ -2572,3 +2572,16 @@ test('allows the Ordinal Punks Netlify production and verified deploy-preview or
     assert.equal(response.headers.get('vary'), 'Origin');
   }
 });
+
+
+test('allows the Punks Vercel production origin and still rejects unrelated origins', async () => {
+  const origin = 'https://punks-topaz.vercel.app';
+  const response = await worker.fetch(makeRequest('/api/market?collectionId=invalid', { origin, ip: '192.0.2.215' }), {});
+  assert.equal(response.headers.get('access-control-allow-origin'), origin);
+  assert.equal(response.headers.get('vary'), 'Origin');
+
+  const denied = await worker.fetch(makeRequest('/api/market?collectionId=invalid', {
+    origin: 'https://untrusted-vercel-project.vercel.app', ip: '192.0.2.216',
+  }), {});
+  assert.equal(denied.headers.get('access-control-allow-origin'), null);
+});
