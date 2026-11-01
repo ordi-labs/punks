@@ -981,10 +981,10 @@ async function spendableUtxos(request, env, corsHeaders) {
   if (!['bitcoin', 'fractal'].includes(chain) || !validWalletAddress(address) || cursor === null || requestedSize === null || requestedSize < 1) throw new SpendableUtxoError('INVALID_QUERY', 400);
   const base = chain === 'bitcoin' ? BITCOIN_API_BASE : API_BASE;
   const supportsAlkanes = chain === 'bitcoin';
-  // Enumerate the complete all-utxo-data inventory so outputs omitted from UniSat's available list
-  // are still inspected. This is NOT spend authorization: every output must pass per-outpoint
-  // verification and protocol-asset checks below; unknown or contradictory metadata fails closed.
-  const source = await spendableUtxoStage('UTXO_LIST', () => uniNetwork(base, `/v1/indexer/address/${encodeURIComponent(address)}/all-utxo-data?cursor=${cursor}&size=${requestedSize}`, env));
+  // Scan UniSat's spendable-UTXO list so the result covers the same candidate population as
+  // its available-balance summary. Include low-fee outputs; each candidate still must pass
+  // per-outpoint confirmation, spend-state and protocol-asset checks before it is called safe.
+  const source = await spendableUtxoStage('UTXO_LIST', () => uniNetwork(base, `/v1/indexer/address/${encodeURIComponent(address)}/available-utxo-data?cursor=${cursor}&size=${requestedSize}&withLowFee=true`, env));
   if (!Array.isArray(source?.utxo)) throw new SpendableUtxoError('UTXO_LIST_INVALID_RESPONSE');
   const raw = source.utxo;
   if (raw.length > requestedSize) throw new SpendableUtxoError('UTXO_PAGE_OVERSIZED');
