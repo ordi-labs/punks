@@ -1147,7 +1147,7 @@ test('desktop and mobile use the full UTXO inventory and avoid unsupported Alkan
   const address = 'bc1qmobiletestaddress000000000000000000000';
   const record = {
     address, txid: '1'.repeat(64), vout: 0, satoshi: 120000,
-    scriptPk: '0014' + '66'.repeat(20), height: 100, isLowFee: false, isOpInRBF: false, inscriptions: [],
+    scriptPk: '0014' + '66'.repeat(20), height: 100, isLowFee: false, isOpInRBF: false, inscriptions: null, runes: null, alkanes: null,
   };
   const upstreamMobileModes = [];
   const upstreamPaths = [];
@@ -1159,7 +1159,7 @@ test('desktop and mobile use the full UTXO inventory and avoid unsupported Alkan
       upstreamMobileModes.push(url.searchParams.get('mobile'));
       return Response.json({ code: 0, data: { total: 1, utxo: [record] } });
     }
-    if (url.pathname === `/v1/indexer/utxo/${record.txid}/0`) return Response.json({ code: 0, data: { ...record, isSpent: false, runes: [], alkanes: [] } });
+    if (url.pathname === `/v1/indexer/utxo/${record.txid}/0`) return Response.json({ code: 0, data: { ...record, isSpent: false, inscriptions: [], runes: [], alkanes: [] } });
     throw new Error(`Unexpected upstream URL: ${url}`);
   };
   try {
