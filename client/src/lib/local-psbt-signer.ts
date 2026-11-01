@@ -67,7 +67,7 @@ function assertSameReview(left: LocalPsbtReview, right: LocalPsbtReview) {
   assertLocalVaultReviewUnchanged(left, right);
 }
 async function verifyInputs(network: OrdiNetwork, walletAddress: string, inputs: ReviewedInput[], minimumSats: number) {
-  const safe = await getSpendableUtxos(network, walletAddress, minimumSats, { requiredOutpoints: inputs.map(outpointKey) });
+  const safe = await getSpendableUtxos(network, walletAddress, minimumSats, { requiredOutpoints: inputs.map(outpointKey), collectAll: false });
   const safeByOutpoint = new Map(safe.map(item => [outpointKey(item), item]));
   for (const input of inputs) {
     const match = safeByOutpoint.get(outpointKey(input));

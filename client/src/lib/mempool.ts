@@ -322,7 +322,7 @@ function compareSpendableUtxos(left: SpendableUtxo, right: SpendableUtxo) {
     left.vout - right.vout;
 }
 
-export async function getSpendableUtxos(network: string, address: string, minimumSats: number, options: { mobile?: boolean; requiredOutpoints?: string[]; collectAll?: boolean; allowInsufficientSafeBalance?: boolean; onProgress?: (progress: { scannedCount: number; totalCount: number; safeUtxoCount: number }) => void; onDiagnostics?: (diagnostics: { counts: Record<string, number>; sats: Record<string, number> }) => void } = {}): Promise<SpendableUtxo[]> {
+export async function getSpendableUtxos(network: string, address: string, minimumSats: number, options: { mobile?: boolean; requiredOutpoints?: string[]; collectAll?: boolean; minimumUtxoSats?: number; allowInsufficientSafeBalance?: boolean; onProgress?: (progress: { scannedCount: number; totalCount: number; safeUtxoCount: number }) => void; onDiagnostics?: (diagnostics: { counts: Record<string, number>; sats: Record<string, number> }) => void } = {}): Promise<SpendableUtxo[]> {
   const chain = network === "BITCOIN_MAINNET" ? "bitcoin" : network === "FRACTAL_BITCOIN_MAINNET" ? "fractal" : null;
   if (!chain || !address || !Number.isSafeInteger(minimumSats) || minimumSats <= 0) {
     throw new Error("Invalid network, address, or amount for spendable UTXO verification.");
@@ -330,6 +330,7 @@ export async function getSpendableUtxos(network: string, address: string, minimu
   // Local Vault fee discovery scans the complete indexer-reported set by default.
   // Callers may opt into an early stop only when they explicitly request collectAll: false.
   const collectAll = options.collectAll ?? true;
+  if (options.minimumUtxoSats !== undefined && (!Number.isSafeInteger(options.minimumUtxoSats) || options.minimumUtxoSats <= 0)) throw new Error("The minimum individual safe UTXO value is invalid.");
   const normalizedOutpoints = options.requiredOutpoints?.map(value => value.toLowerCase());
   const requiredOutpoints = normalizedOutpoints ? normalizedOutpoints.filter((value, index) => normalizedOutpoints.indexOf(value) === index) : null;
   if (requiredOutpoints && (requiredOutpoints.length !== options.requiredOutpoints!.length || requiredOutpoints.length < 1 || requiredOutpoints.some(value => !/^[a-f0-9]{64}:\d+$/.test(value)))) {
@@ -443,7 +444,8 @@ export async function getSpendableUtxos(network: string, address: string, minimu
     if (requiredOutpoints) {
       const byOutpoint = new Map(collected.map(item => [`${item.txid.toLowerCase()}:${item.vout}`, item]));
       if (requiredOutpoints.every(outpoint => byOutpoint.has(outpoint)) && !collectAll) return requiredOutpoints.map(outpoint => byOutpoint.get(outpoint)!);
-    } else if (!collectAll && safeSats >= minimumSats) return [...collected].sort(compareSpendableUtxos);
+    } else if (!collectAll && options.minimumUtxoSats !== undefined && collected.some(item => item.satoshi >= options.minimumUtxoSats!)) return [...collected].sort(compareSpendableUtxos);
+    else if (!collectAll && options.minimumUtxoSats === undefined && safeSats >= minimumSats) return [...collected].sort(compareSpendableUtxos);
     if (pageScannedCount === 0 && hasMore) {
       throw new Error(`Safe UTXO scan is incomplete: the indexer stopped at ${scannedCount} address outputs. No transaction was signed or broadcast.`);
     }

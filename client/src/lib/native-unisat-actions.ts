@@ -104,11 +104,14 @@ export async function ensureNativeInscriptionFeeBalance(
   let verifiedUtxos: Awaited<ReturnType<typeof getSpendableUtxos>>;
   try {
     // The Worker verifies confirmation, no inscriptions, no Runes/Alkanes, and current spendability.
-    verifiedUtxos = await getSpendableUtxos(networkEnum, address, minimumFeeBalance, { mobile: true });
+    verifiedUtxos = await getSpendableUtxos(networkEnum, address, minimumFeeBalance, { mobile: true, collectAll: false, minimumUtxoSats: minimumFeeBalance });
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : String(cause);
+    const nextStep = /(?:Insufficient safe|verified only .*? Minimum required:)/i.test(detail)
+      ? `Add at least ${minimumFeeBalance.toLocaleString()} ${feeAsset} sats in a separate confirmed fee UTXO.`
+      : "The Worker or UniSat could not complete the safety check. Do not add funds based on this service error; retry when the service responds.";
     throw new Error(
-      `Could not verify a safe fee UTXO on ${networkLabel} for ${address}. Add at least ${minimumFeeBalance.toLocaleString()} ${feeAsset} sats to this address in a separate confirmed UTXO with no inscription, Runes, or Alkanes, then check again. No transaction was signed or broadcast. Verification detail: ${detail}`,
+      `Could not verify a safe fee UTXO on ${networkLabel} for ${address}. ${nextStep} No transaction was signed or broadcast. Verification detail: ${detail}`,
     );
   }
   const feeUtxos = verifiedUtxos.filter(utxo =>
@@ -140,10 +143,13 @@ export async function ensureNativePaymentBalance(
   const minimumSats = amountSats + Math.ceil(feeRate * 250) + 600;
   let verifiedUtxos: Awaited<ReturnType<typeof getSpendableUtxos>>;
   try {
-    verifiedUtxos = await getSpendableUtxos(networkEnum, address, minimumSats, { mobile: options.mobile === true });
+    verifiedUtxos = await getSpendableUtxos(networkEnum, address, minimumSats, { mobile: options.mobile === true, collectAll: false });
   } catch (cause) {
     const detail = cause instanceof Error ? cause.message : String(cause);
-    throw new Error(`Could not verify safe ${feeAsset} UTXOs for this ${operation} on ${networkLabel}. Add confirmed ${feeAsset} sats in uninscribed UTXOs, then check again. No transaction was signed or broadcast. Verification detail: ${detail}`);
+    const nextStep = /(?:Insufficient safe (?:BTC|FB) UTXOs|verified only .*? Minimum required:)/i.test(detail)
+      ? `Add confirmed ${feeAsset} sats in uninscribed UTXOs, then check again.`
+      : "The Worker or UniSat could not complete the safety check. Do not add funds based on this service error; retry when the service responds.";
+    throw new Error(`Could not verify safe ${feeAsset} UTXOs for this ${operation} on ${networkLabel}. ${nextStep} No transaction was signed or broadcast. Verification detail: ${detail}`);
   }
   const safeSats = verifiedUtxos.reduce((total, utxo) => total + utxo.satoshi, 0);
   if (safeSats < minimumSats) {
