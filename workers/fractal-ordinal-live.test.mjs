@@ -1295,6 +1295,37 @@ test('reports safe-UTXO rejection reasons without exposing addresses or outpoint
   } finally { globalThis.fetch = previousFetch; }
 });
 
+test('verifies omitted inline inscription metadata against the exact UniSat UTXO detail', async () => {
+  const previousFetch = globalThis.fetch;
+  const address = 'bc1qdetailverifiedinscriptions0000000000000';
+  const safeTxid = 'd'.repeat(64);
+  const assetTxid = 'e'.repeat(64);
+  const base = { address, vout: 0, satoshi: 120000, scriptPk: '0014' + '77'.repeat(20), height: 100, isLowFee: false, isOpInRBF: false, runes: [], alkanes: [] };
+  const inventory = [{ ...base, txid: safeTxid }, { ...base, txid: assetTxid }];
+  const detailLookups = [];
+  globalThis.fetch = async input => {
+    const url = new URL(String(input));
+    if (url.pathname.endsWith('/all-utxo-data')) return Response.json({ code: 0, data: { cursor: 0, total: inventory.length, utxo: inventory } });
+    const match = url.pathname.match(/^\/v1\/indexer\/utxo\/([0-9a-f]{64})\/(\d+)$/);
+    if (match) {
+      detailLookups.push(match[1]);
+      const record = inventory.find(item => item.txid === match[1]);
+      return Response.json({ code: 0, data: { ...record, isSpent: false, inscriptions: match[1] === safeTxid ? [] : [{ inscriptionId: 'redacted-asset' }] } });
+    }
+    throw new Error(`Unexpected upstream URL: ${url}`);
+  };
+  try {
+    const response = await worker.fetch(makeRequest(`/api/spendable-utxos?chain=fractal&address=${address}&cursor=0&size=25`, { ip: '192.0.2.243' }), { UNISAT_API_KEY: 'test-only' });
+    const data = await response.json();
+    assert.equal(response.status, 200);
+    assert.deepEqual(detailLookups, [safeTxid, assetTxid]);
+    assert.equal(data.utxo.length, 1);
+    assert.equal(data.utxo[0].txid, safeTxid);
+    assert.equal(data.diagnostics.hasInscriptionOrUnknown, 1);
+    assert.equal(JSON.stringify(data).includes(assetTxid), false);
+  } finally { globalThis.fetch = previousFetch; }
+});
+
 test('Worker attests that exact BTC and FB PSBT inputs cover payment plus fees', async () => {
   const previousFetch = globalThis.fetch;
   const address = 'bc1qtestaddress0000000000000000000000000';
