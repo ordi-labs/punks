@@ -84,7 +84,7 @@ describe("native UniSat wallet actions", () => {
     await expect(ensureNativePaymentBalance(
       "FRACTAL_BITCOIN_MAINNET", "bc1qwallet", 1_000, 2, "fb-transfer", { mobile },
     )).resolves.toBeUndefined();
-    expect(mocks.getSpendableUtxos).toHaveBeenCalledWith("FRACTAL_BITCOIN_MAINNET", "bc1qwallet", 2_100, { mobile });
+    expect(mocks.getSpendableUtxos).toHaveBeenCalledWith("FRACTAL_BITCOIN_MAINNET", "bc1qwallet", 2_100, { mobile, collectAll: false });
   });
 
   it("accepts a Worker-verified, confirmed, uninscribed fee UTXO large enough for the transfer", async () => {
@@ -92,7 +92,7 @@ describe("native UniSat wallet actions", () => {
     await expect(ensureNativeInscriptionFeeBalance(
       "BITCOIN_MAINNET", "bc1qwallet", { location: INSCRIPTION_LOCATION }, 3,
     )).resolves.toBeUndefined();
-    expect(mocks.getSpendableUtxos).toHaveBeenCalledWith("BITCOIN_MAINNET", "bc1qwallet", 1_650, { mobile: true });
+    expect(mocks.getSpendableUtxos).toHaveBeenCalledWith("BITCOIN_MAINNET", "bc1qwallet", 1_650, { mobile: true, collectAll: false, minimumUtxoSats: 1_650 });
   });
   it("rejects the Ordinal outpoint itself even if the safe service erroneously returns it", async () => {
     mocks.getSpendableUtxos.mockResolvedValue([{ address: "bc1qwallet", txid: "c".repeat(64), vout: 0, satoshi: 20_000 }]);
