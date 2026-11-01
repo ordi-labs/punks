@@ -121,7 +121,7 @@ export async function prepareLocalRuneTransfer(p: { network: OrdiNetwork; wallet
   const rate = Math.ceil(feeEstimate.feeRate);
   if (!Number.isSafeInteger(rate) || rate < 1 || rate > 1_000) throw new Error("Live fee rate is outside safe bounds.");
   const sourceScript = scriptFor(account.address), pub = Buffer.from(account.publicKey, "hex");
-  const feeCandidates = (await getSpendableUtxos(p.network, account.address, DUST + rate * 500, { collectAll: false })).filter(x => !selected.some(r => outpoint(r.txid,r.vout) === outpoint(x.txid,x.vout)) && Buffer.from(x.scriptPk,"hex").equals(sourceScript));
+  const feeCandidates = (await getSpendableUtxos(p.network, account.address, DUST + rate * 500)).filter(x => !selected.some(r => outpoint(r.txid,r.vout) === outpoint(x.txid,x.vout)) && Buffer.from(x.scriptPk,"hex").equals(sourceScript));
   const runeChange = runeTotal - BigInt(amountBaseUnits);
   const runestone = buildLocalRunestoneScript(p.runeid, amountBaseUnits, runeChange.toString());
   const recipientScript = scriptFor(recipient);
