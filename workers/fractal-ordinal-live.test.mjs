@@ -1773,9 +1773,31 @@ test('identifies UniSat quota exhaustion returned as HTTP 403 code -2005', async
     const data = await response.json();
     assert.equal(response.status, 503);
     assert.equal(data.code, 'UTXO_LIST_UNISAT_RATE_LIMITED');
-    assert.match(data.error, /quota\/rate limit reached/i);
+    assert.match(data.error, /quota\/rate limit or API access restriction/i);
     assert.equal(JSON.stringify(data).includes(address), false);
     assert.equal(JSON.stringify(data).includes('bitcoin-test-only'), false);
+  } finally { globalThis.fetch = previousFetch; }
+});
+
+test('retries transient UniSat application-level -2005 on HTTP 200 before accepting a valid UTXO list', async () => {
+  const previousFetch = globalThis.fetch;
+  const address = 'bc1qtestaddress0000000000000000000000000';
+  let inventoryCalls = 0;
+  globalThis.fetch = async (input, init = {}) => {
+    const url = new URL(String(input));
+    assert.equal(url.origin, 'https://open-api.unisat.io');
+    assert.equal(new Headers(init.headers).get('Authorization'), 'Bearer bitcoin-test-only');
+    if (url.pathname.endsWith('/all-utxo-data')) {
+      inventoryCalls += 1;
+      if (inventoryCalls === 1) return Response.json({ code: -2005, msg: 'request limit exceeded' });
+    }
+    return Response.json({ code: 0, data: { cursor: 0, total: 0, utxo: [] } });
+  };
+  try {
+    const response = await worker.fetch(makeRequest(`/api/spendable-utxos?chain=bitcoin&address=${address}&cursor=0&size=25`, { ip: '192.0.2.234' }), { UNISAT_BITCOIN_API: 'bitcoin-test-only' });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).chain, 'bitcoin');
+    assert.equal(inventoryCalls, 2);
   } finally { globalThis.fetch = previousFetch; }
 });
 
