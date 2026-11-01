@@ -12,6 +12,8 @@ const ALLOWED_ORIGINS = new Set([
   'https://ordi-punks.netlify.app',
   'https://deploy-preview-482--ordi-punks.netlify.app',
   'https://punks-topaz.vercel.app',
+  'https://fractal-pokedex-ordinal-ledger.vercel.app',
+  'https://pokedex-ordinal-ledger.vercel.app',
 ]);
 
 // Browser extensions have a distinct, browser-assigned origin. Accept only canonical
@@ -1707,6 +1709,10 @@ export default {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     const headers = cors(request);
+
+    if (request.method === 'GET' && url.pathname === '/health') {
+      return Response.json({ ok: true, service: 'fractal-ordinal-live', version: '2026-11-01' }, { headers: { ...headers, 'Cache-Control': 'no-store' } });
+    }
 
     if (origin && !isAllowedOrigin(origin)) {
       return new Response('Forbidden', { status: 403, headers });
