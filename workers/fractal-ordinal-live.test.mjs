@@ -1135,14 +1135,14 @@ test('attests confirmed asset-free Fractal UTXOs despite a historical RBF flag a
     assert.equal(data.diagnosticsSats.hasRunes, records[1].satoshi);
     assert.equal(data.diagnosticsSats.hasAlkanes, records[2].satoshi);
     assert.equal(data.diagnosticsSats.unconfirmedOrInvalidHeight, records[3].satoshi);
-    assert.ok(calls.some(path => path.endsWith('/available-utxo-data')), 'fee-safe discovery must enumerate the UniSat available-UTXO inventory');
+    assert.ok(calls.some(path => path.endsWith('/all-utxo-data')), 'fee-safe discovery must enumerate the complete UniSat inventory');
     assert.ok(calls.some(path => path.startsWith('/v1/indexer/utxo/')), 'every candidate must be verified through the detail endpoint');
     assert.equal(calls.some(path => path.includes('/runes/utxo/') || path.includes('/alkanes/utxo/')), false);
     assert.equal(JSON.stringify(data).includes('test-only'), false);
   } finally { globalThis.fetch = previousFetch; }
 });
 
-test('desktop and mobile use the available UTXO list and avoid unsupported Alkanes lookup when metadata is present', async () => {
+test('desktop and mobile use the full UTXO inventory and avoid unsupported Alkanes lookup when metadata is present', async () => {
   const previousFetch = globalThis.fetch;
   const address = 'bc1qmobiletestaddress000000000000000000000';
   const record = {
@@ -1218,7 +1218,7 @@ test('checks Runes on Fractal but never calls the unsupported Alkanes endpoint',
   } finally { globalThis.fetch = previousFetch; }
 });
 
-test('verifies every available candidate through the detail endpoint, including all eleven UTXOs', async () => {
+test('verifies every indexed candidate through the detail endpoint, including all eleven UTXOs', async () => {
   const previousFetch = globalThis.fetch;
   const address = 'bc1qassetfreemetadata000000000000000000000';
   const records = Array.from({ length: 11 }, (_, index) => ({
@@ -1230,8 +1230,7 @@ test('verifies every available candidate through the detail endpoint, including 
   globalThis.fetch = async input => {
     const url = new URL(String(input));
     calls.push(url.pathname);
-    if (url.pathname.endsWith('/available-utxo-data')) {
-      assert.equal(url.searchParams.get('withLowFee'), 'true');
+    if (url.pathname.endsWith('/all-utxo-data')) {
       return Response.json({ code: 0, data: { cursor: 0, total: records.length, utxo: records } });
     }
     const match = url.pathname.match(/^\/v1\/indexer\/utxo\/([0-9a-f]{64})\/(\d+)$/);
@@ -1250,7 +1249,7 @@ test('verifies every available candidate through the detail endpoint, including 
     assert.equal(response.status, 200);
     assert.equal(data.utxo.length, 11);
     assert.equal(data.utxo.every(item => item.inscriptionsRunesAlkanesChecked === true), true);
-    assert.ok(calls.includes('/v1/indexer/address/' + address + '/available-utxo-data'));
+    assert.ok(calls.includes('/v1/indexer/address/' + address + '/all-utxo-data'));
     assert.equal(calls.filter(path => path.startsWith('/v1/indexer/utxo/')).length, 11);
   } finally { globalThis.fetch = previousFetch; }
 });
@@ -1306,7 +1305,7 @@ test('verifies omitted inline inscription metadata against the exact UniSat UTXO
   const detailLookups = [];
   globalThis.fetch = async input => {
     const url = new URL(String(input));
-    if (url.pathname.endsWith('/available-utxo-data')) return Response.json({ code: 0, data: { cursor: 0, total: inventory.length, utxo: inventory } });
+    if (url.pathname.endsWith('/all-utxo-data')) return Response.json({ code: 0, data: { cursor: 0, total: inventory.length, utxo: inventory } });
     const match = url.pathname.match(/^\/v1\/indexer\/utxo\/([0-9a-f]{64})\/(\d+)$/);
     if (match) {
       detailLookups.push(match[1]);
@@ -1641,7 +1640,7 @@ test('refuses duplicate outpoints in the display-only address UTXO page', async 
     assert.equal((await response.json()).code, 'ACTIVE_UTXO_UPSTREAM_CONNECTION_OR_RESPONSE');
   } finally { globalThis.fetch = previousFetch; }
 });
-test('continues fee-safe UTXO pagination from the available list when UniSat omits total', async () => {
+test('continues fee-safe UTXO pagination from the complete inventory when UniSat omits total', async () => {
   const previousFetch = globalThis.fetch;
   const address = 'bc1qtestaddress0000000000000000000000000';
   globalThis.fetch = async (input, init = {}) => {
@@ -1663,7 +1662,7 @@ test('continues fee-safe UTXO pagination from the available list when UniSat omi
       isLowFee: false,
       isOpInRBF: false,
     }));
-    if (url.pathname.endsWith('/available-utxo-data')) return Response.json({ code: 0, data: { cursor, utxo } });
+    if (url.pathname.endsWith('/all-utxo-data')) return Response.json({ code: 0, data: { cursor, utxo } });
     const match = url.pathname.match(/^\/v1\/indexer\/utxo\/([0-9a-f]{64})\/(\d+)$/);
     if (match) {
       const record = utxo.find(item => item.txid === match[1]);
@@ -1819,7 +1818,7 @@ test('retries transient UniSat application-level -2005 on HTTP 200 before accept
     const url = new URL(String(input));
     assert.equal(url.origin, 'https://open-api.unisat.io');
     assert.equal(new Headers(init.headers).get('Authorization'), 'Bearer bitcoin-test-only');
-    if (url.pathname.endsWith('/available-utxo-data')) {
+    if (url.pathname.endsWith('/all-utxo-data')) {
       inventoryCalls += 1;
       if (inventoryCalls === 1) return Response.json({ code: -2005, msg: 'request limit exceeded' });
     }
