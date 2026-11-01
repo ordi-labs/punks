@@ -650,7 +650,10 @@ export function Brc20TransferFlow({
     } catch (cause) {
       const detail = cause instanceof Error ? cause.message : String(cause);
       setPaymentPreflight(null);
-      setMessage(`Paiement bloqué avant l’approbation UniSat. Aucun paiement n’a été envoyé. ${detail} Conservez ce reçu et ne créez pas de doublon. Après avoir ajouté un UTXO confirmé distinct sans Ordinals, Runes ni Alkanes, relancez la vérification. Outil UTXO UniSat : https://unisat.io/utxo`);
+      const nextStep = /Insufficient safe (?:BTC|FB) UTXOs/i.test(detail)
+        ? "Ajoutez un UTXO confirmé distinct sans Ordinals, Runes ni Alkanes, puis relancez la vérification."
+        : "Le Worker ou UniSat n’a pas pu terminer le contrôle. Ne rajoutez pas de fonds sur la base de cette erreur; réessayez lorsque le service répondra correctement.";
+      setMessage(`Paiement bloqué avant l’approbation UniSat. Aucun paiement n’a été envoyé. ${detail} Conservez ce reçu et ne créez pas de doublon. ${nextStep}`);
     } finally {
       setBusyAction("");
     }

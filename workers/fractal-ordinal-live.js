@@ -451,6 +451,23 @@ async function uniNetwork(base, path, env, init = {}) {
         await new Promise(resolve => setTimeout(resolve, delayMs));
         continue;
       }
+      // UniSat may return quota/rate limiting as code -2005 inside an HTTP 200
+      // JSON envelope. Retry this idempotent lookup with bounded backoff before
+      // falling through to the configured same-network fallback key.
+      if (retryableRead && currentResponse.ok && attempt + 1 < maxAttempts) {
+        let responseCode = null;
+        try {
+          const responsePayload = await currentResponse.clone().json();
+          if (typeof responsePayload?.code === 'number' || typeof responsePayload?.code === 'string') {
+            responseCode = String(responsePayload.code);
+          }
+        } catch {}
+        if (responseCode === '-2005') {
+          const delayMs = 400 * (2 ** attempt);
+          await new Promise(resolve => setTimeout(resolve, delayMs));
+          continue;
+        }
+      }
       if (currentResponse.ok || !retryableRead ||
           (currentResponse.status !== 429 && currentResponse.status < 500)) break;
       if (attempt + 1 < maxAttempts) {
@@ -2183,7 +2200,7 @@ export default {
         const message = failure.status === 400
           ? 'Invalid spendable UTXO query.'
           : failure.code.endsWith('_UNISAT_RATE_LIMITED')
-            ? 'UniSat API quota/rate limit reached. Retry later or configure a UniSat API key with available quota.'
+            ? 'UniSat refused the UTXO lookup with code -2005 (quota/rate limit or API access restriction). Verify the key and network, then retry. Payment remains blocked until UTXOs are verified.'
             : 'Live UniSat data is temporarily unavailable.';
         if (failure.status !== 400) console.warn('Spendable UTXO lookup failed', { chain: url.searchParams.get('chain') || 'unknown', code: failure.code });
         return Response.json({ error: message, code: failure.code }, { status: failure.status, headers: { ...headers, 'Cache-Control': 'no-store' } });
