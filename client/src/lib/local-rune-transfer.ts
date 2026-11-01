@@ -155,7 +155,7 @@ async function assertCurrent(plan: LocalRuneTransferPlan) {
   const [utxos, ordinals, balance, safe] = await Promise.all([
     allRuneUtxos(plan.sourceAddress,plan.network,plan.runeid), fetchAddressOrdinals(plan.sourceAddress,plan.network),
     fetchRuneBalance(plan.sourceAddress,plan.network,plan.runeid),
-    getSpendableUtxos(plan.network,plan.sourceAddress,1,{requiredOutpoints:plan.feeInputs.map(x=>outpoint(x.txid,x.vout))}),
+    getSpendableUtxos(plan.network,plan.sourceAddress,1,{requiredOutpoints:plan.feeInputs.map(x=>outpoint(x.txid,x.vout)),collectAll:false}),
   ]);
   if (ordinals.detail.length !== ordinals.total || ordinals.detail.some(x=>!x.location)) throw new Error("Ordinal index incomplete; no signature or broadcast.");
   const inscribed = new Set(ordinals.detail.map(x=>x.location!.split(":").slice(0,2).join(":").toLowerCase()));

@@ -65,7 +65,7 @@ async function assertFeeInputsStillSafe(network: OrdiNetwork, address: string, p
   // are checked against the spendable set, so the inscription itself is never treated as fees.
   const feeInputs = getOrdinalFeeInputs(plan);
   if (!feeInputs.length) throw new Error("Le PSBT n’a pas d’entrée de frais distincte; le vault bloque ce transfert.");
-  const refs = await getSpendableUtxos(network, address, 1, { requiredOutpoints: feeInputs.map(input => `${input.txid}:${input.vout}`) });
+  const refs = await getSpendableUtxos(network, address, 1, { requiredOutpoints: feeInputs.map(input => `${input.txid}:${input.vout}`), collectAll: false });
   const byOutpoint = new Map(refs.map(ref => [`${ref.txid.toLowerCase()}:${ref.vout}`, ref]));
   for (const input of feeInputs) {
     const live = byOutpoint.get(`${input.txid.toLowerCase()}:${input.vout}`);

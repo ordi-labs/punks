@@ -416,7 +416,7 @@ export function UniSatRunesSendPanel({
         network,
         address,
         minimumSafeFeeSats,
-        { mobile: isMobileUniSatDevice() }
+        { mobile: isMobileUniSatDevice(), collectAll: false }
       );
       const safeFeeSats = safeFeeUtxos.reduce(
         (sum, utxo) => sum + utxo.satoshi,

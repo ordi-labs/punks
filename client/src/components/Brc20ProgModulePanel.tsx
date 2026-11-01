@@ -274,7 +274,7 @@ export function Brc20ProgModulePanel({ network, address, site = "pokedex" }: { n
       const feeRate = Math.max(1, Math.ceil(feeEstimate.feeRate));
       const [inscriptionOutput, feeUtxos] = await Promise.all([
         fetchOutpoint(match[1], Number(match[2]), address, inscription.outputValue === undefined ? undefined : Number(inscription.outputValue)),
-        getSpendableUtxos(BITCOIN, address, Math.max(2_000, feeRate * 400 + 1_200), { mobile: true }),
+        getSpendableUtxos(BITCOIN, address, Math.max(2_000, feeRate * 400 + 1_200), { mobile: true, collectAll: false }),
       ]);
       const mempool = getMempoolConfig(BITCOIN)!;
       const candidates = [...feeUtxos].sort((a, b) => b.satoshi - a.satoshi).slice(0, 19);

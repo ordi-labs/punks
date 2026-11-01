@@ -84,7 +84,7 @@ describe("Local Vault BTC/FB PSBT signer", () => {
     vi.mocked(getSpendableUtxos).mockResolvedValue([prepared.utxo]);
     const review = await reviewLocalPsbt(prepared.hex, wallet, network);
     expect(review).toMatchObject({ network, addressType: type, sourceAddress: prepared.account.address, inputCount: 1, outputCount: 1, inputSats: 10_000, outputSats: 8_000, feeSats: 2_000 });
-    expect(getSpendableUtxos).toHaveBeenCalledWith(network, prepared.account.address, 10_000, { requiredOutpoints: [`${prepared.utxo.txid}:0`] });
+    expect(getSpendableUtxos).toHaveBeenCalledWith(network, prepared.account.address, 10_000, { requiredOutpoints: [`${prepared.utxo.txid}:0`], collectAll: false });
     const signed = await signLocalPsbt(prepared.hex, wallet, review);
     const tx = await finalizeLocalPsbt(signed, wallet, review);
     expect(tx.txid).toMatch(/^[a-f0-9]{64}$/);
