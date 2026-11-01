@@ -1052,7 +1052,7 @@ async function spendableUtxos(request, env, corsHeaders) {
     }
     // all-utxo-data may omit inline inscription metadata when it is not indexed;
     // the verified per-outpoint detail below must still explicitly confirm an empty list.
-    if (item?.inscriptions !== undefined && (!Array.isArray(item.inscriptions) || item.inscriptions.length !== 0)) {
+    if (item?.inscriptions !== undefined && item.inscriptions !== null && (!Array.isArray(item.inscriptions) || item.inscriptions.length !== 0)) {
       rejected.hasInscriptionOrUnknown += 1;
       rejectedSats.hasInscriptionOrUnknown += satoshi;
       continue;
@@ -1092,7 +1092,7 @@ async function spendableUtxos(request, env, corsHeaders) {
         continue;
       }
     }
-    let runeMetadata = [item?.runes, detail?.runes].filter(value => value !== undefined);
+    let runeMetadata = [item?.runes, detail?.runes].filter(value => value !== undefined && value !== null);
     // UniSat's available-UTXO list does not always include protocol arrays. When neither
     // the list nor the verified UTXO detail provides Runes metadata, query the per-outpoint
     // endpoint instead of incorrectly classifying every such output as unsafe.
@@ -1108,7 +1108,7 @@ async function spendableUtxos(request, env, corsHeaders) {
       continue;
     }
     if (supportsAlkanes) {
-      let alkaneMetadata = [item?.alkanes, detail?.alkanes].filter(value => value !== undefined);
+      let alkaneMetadata = [item?.alkanes, detail?.alkanes].filter(value => value !== undefined && value !== null);
       // As with Runes, missing metadata is not proof of safety. Query the protocol endpoint
       // when possible. UniSat's available-utxo-data already excludes protocol-asset outputs;
       // a 404 means this network deployment does not expose the optional Alkanes detail route.
@@ -1133,8 +1133,8 @@ async function spendableUtxos(request, env, corsHeaders) {
       }
   
     } else if (
-      (item?.alkanes !== undefined && (!Array.isArray(item.alkanes) || item.alkanes.length !== 0)) ||
-      (detail?.alkanes !== undefined && (!Array.isArray(detail.alkanes) || detail.alkanes.length !== 0))
+      (item?.alkanes !== undefined && item.alkanes !== null && (!Array.isArray(item.alkanes) || item.alkanes.length !== 0)) ||
+      (detail?.alkanes !== undefined && detail.alkanes !== null && (!Array.isArray(detail.alkanes) || detail.alkanes.length !== 0))
     ) {
       // Fractal does not support Alkanes; unexpected or malformed asset markers still fail closed.
       rejected.hasAlkanes += 1;
