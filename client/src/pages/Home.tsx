@@ -92,6 +92,43 @@ function uniqueValues(records: PunkRecord[], key: FilterKey) {
     new Set(records.map(record => getTrait(record, key)).filter(Boolean))
   ).sort((a, b) => a.localeCompare(b));
 }
+type CardListingStatus = {
+  label: string;
+  className: string;
+  dotClassName: string;
+};
+function getCardListingStatus(
+  tokenId: string,
+  listedTokenIds: Set<string>,
+  loaded: boolean,
+  unavailable: boolean
+): CardListingStatus {
+  if (unavailable) {
+    return {
+      label: "LIVE STATUS UNAVAILABLE",
+      className: "border-[#d18b78]/40 text-[#d18b78]",
+      dotClassName: "bg-[#d18b78]",
+    };
+  }
+  if (!loaded) {
+    return {
+      label: "SYNCING LIVE STATUS",
+      className: "border-[#3b434d] text-[#7f8b99]",
+      dotClassName: "animate-pulse bg-[#7f8b99]",
+    };
+  }
+  return listedTokenIds.has(tokenId)
+    ? {
+        label: "LIVE LISTING",
+        className: "border-[#70c7a0]/40 text-[#70c7a0]",
+        dotClassName: "bg-[#70c7a0]",
+      }
+    : {
+        label: "NOT LISTED",
+        className: "border-[#3b434d] text-[#7f8b99]",
+        dotClassName: "bg-[#718092]",
+      };
+}
 function normalizeSearchText(value: string) {
   return value
     .normalize("NFD")
@@ -999,6 +1036,12 @@ export default function Home() {
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 xl:grid-cols-5">
                   {visibleRecords.map(record => {
                     const token = rarity.token(record);
+                    const listingStatus = getCardListingStatus(
+                      record.tokenId,
+                      listedTokenIds,
+                      allListingsLoaded,
+                      Boolean(allListingsError || marketError)
+                    );
                     return (
                       <article
                         key={record.id}
@@ -1052,6 +1095,12 @@ export default function Home() {
                               tier={token.tier}
                               detail={`rank ${token.rank}`}
                             />
+                          </div>
+                          <div className="mt-2">
+                            <span className={`inline-flex items-center gap-1.5 border px-2 py-1 font-mono text-[9px] uppercase tracking-[0.08em] ${listingStatus.className}`}>
+                              <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${listingStatus.dotClassName}`} />
+                              {listingStatus.label}
+                            </span>
                           </div>
                           <div className="mt-3 grid grid-cols-2 gap-x-2 gap-y-1.5 border-t border-[#2c323a] pt-2.5">
                             {["Sex", "Hair", "Eyes", "Skin Tone"].map(label => (
