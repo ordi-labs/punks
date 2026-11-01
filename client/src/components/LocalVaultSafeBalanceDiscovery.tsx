@@ -130,7 +130,7 @@ export function LocalVaultSafeBalanceDiscovery({ wallet, network, selectedAddres
               row = { ...row, scannedUtxos: scan.scannedCount, scanTotalUtxos: scan.totalCount };
               results[results.length - 1] = row;
               setRows([...results]);
-              setProgress(`${label} · UTXO disponibles ${scan.scannedCount.toLocaleString("fr-FR")}/${scan.totalCount.toLocaleString("fr-FR")}`);
+              setProgress(`${label} · UTXO indexés examinés ${scan.scannedCount.toLocaleString("fr-FR")}/${scan.totalCount.toLocaleString("fr-FR")}`);
             },
           });
           const safeSats = safe.reduce((sum, item) => sum + item.satoshi, 0);
@@ -190,7 +190,7 @@ export function LocalVaultSafeBalanceDiscovery({ wallet, network, selectedAddres
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
             <p className="font-mono text-[9px] text-[#9ea7b3]">UTXO indexés : {row.totalUtxos === null ? "—" : row.totalUtxos} · disponibles UniSat : {row.availableUtxos === null ? "—" : row.availableUtxos} · indisponibles : {row.unavailableUtxos === null ? "—" : row.unavailableUtxos}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">Inventaire UTXO parcouru : {row.inventoryScannedUtxos === undefined ? "—" : `${row.inventoryScannedUtxos.toLocaleString("fr-FR")} / ${row.inventoryTotalUtxos?.toLocaleString("fr-FR")}`}</p>
-            <p className="font-mono text-[9px] text-[#9ea7b3]">UTXO disponibles UniSat vérifiés : {row.scannedUtxos === undefined ? "—" : `${row.scannedUtxos.toLocaleString("fr-FR")} / ${row.scanTotalUtxos?.toLocaleString("fr-FR")}`}</p>
+            <p className="font-mono text-[9px] text-[#9ea7b3]">UTXO indexés examinés par le contrôle de sûreté : {row.scannedUtxos === undefined ? "—" : `${row.scannedUtxos.toLocaleString("fr-FR")} / ${row.scanTotalUtxos?.toLocaleString("fr-FR")}`}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">Sats disponibles UniSat : {row.availableSats === null ? "—" : `${row.availableSats.toLocaleString("fr-FR")} sats`} · indisponibles : {row.unavailableSats === null ? "—" : `${row.unavailableSats.toLocaleString("fr-FR")} sats`}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">Confirmé : {row.confirmedSats === null ? "—" : `${row.confirmedSats.toLocaleString("fr-FR")} sats`}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">Mempool : {row.pendingSats === null ? "—" : `${row.pendingSats.toLocaleString("fr-FR")} sats`}</p>
