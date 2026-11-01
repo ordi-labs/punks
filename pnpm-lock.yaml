@@ -13,7 +13,7 @@ overrides:
   lodash@4.17.21: 4.18.1
   lodash-es@4.17.21: 4.18.1
   body-parser@1.20.3: 1.20.9
-  "body-parser@>=2.0.0 <2.4.0": 2.4.0
+  body-parser@>=2.0.0 <2.4.0: 2.4.0
   qs: 6.16.1
   tailwindcss>nanoid: 3.3.18
   nanoid@3.3.11: 3.3.18
@@ -26,6 +26,7 @@ overrides:
   postcss@8.5.6: 8.5.29
   vite@7.1.9: 7.3.7
   ip-address: 10.7.4
+  follow-redirects: 1.16.2
 
 patchedDependencies:
   wouter@3.7.1: 4e16e6ff3fde7d6c1024d3e0c8605dc9eb6afb690d0d49958c2f449091813072
@@ -2284,10 +2285,6 @@ packages:
     resolution: {integrity: sha512-Ifk1KcLrxaGt1occQagQNFNNOqRt1LFuehEnHHzB8Z6cRgIxRU1TBaiIsUiCdA+gy5PL7Y1IX31DNKkRmxtXjQ==}
     engines: {node: '>=18'}
 
-  body-parser@1.20.9:
-    resolution: {integrity: sha512-FISIQxV5u91Y9gvuFq3q/tA/qTqLJn3AhRcEvyozyhJTh5OBFFtv827AdHU7Rbyct4r+Ba1/99oFa1Y3yuFsdw==}
-    engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
-
   browserslist@4.29.3:
     resolution: {integrity: sha512-1R4kiYKXGViqEN0CnoDrXc1StD9niAwu+j2dukWzrD4bJgsD4lDmEp0CRbc6E/vYJIfTHwPmwyaKtVSudICdPA==}
     engines: {node: ^6 || ^7 || ^8 || ^9 || ^10 || ^11 || ^12 || >=13.7}
@@ -2566,8 +2563,8 @@ packages:
     resolution: {integrity: sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA==}
     engines: {node: '>= 18.0.0'}
 
-  follow-redirects@1.16.1:
-    resolution: {integrity: sha512-FNvFGzoMLWmE6Yj9spb/zjd7yiNCHiAW9/Tg9CXrQ8wuu32HtlJOwWO11OJafl5FfY3DxTdQ0vj42zU1kvv5jg==}
+  follow-redirects@1.16.2:
+    resolution: {integrity: sha512-/kVP2U8z596Ia0gwFrwyIeo74ta5aVmSeU1FfAUMAmcEP5EP7zydmag3SLiN64NaRKef3lxsq7i/g7ltJQDGow==}
     engines: {node: '>=4.0'}
     peerDependencies:
       debug: '*'
@@ -2948,6 +2945,10 @@ packages:
   proxy-from-env@2.1.0:
     resolution: {integrity: sha512-cJ+oHTW1VAEa8cJslgmUZrc+sjRKgAKl3Zyse6+PV38hZe/V6Z14TbCuXcan9F9ghlz4QrFr2c92TNF82UkYHA==}
     engines: {node: '>=10'}
+
+  qs@6.16.1:
+    resolution: {integrity: sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==}
+    engines: {node: '>=0.6'}
 
   range-parser@1.2.1:
     resolution: {integrity: sha512-Hrgsx+orqoygnmhFbKaHE6c296J+HTAQXoxEF6gNupROmmGJRoyzfG3ccAveqCBrwr/2yxQ5BVd/GTl5agOwSg==}
@@ -3387,21 +3388,7 @@ packages:
   zod@4.6.6:
     resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
-  qs@6.16.1:
-    resolution: {integrity: sha512-5Px6J7rfHBAGUhNQ3es4YzcOdBBw0SDcVtThJml4RdnKw4tKs2epA0kPZ+K8X+WiHktT93RHVcQ/3ym5aTCgtg==}
-    engines: {node: '>=0.6'}
-
-  media-typer@1.1.0:
-    resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
-    engines: {node: '>= 0.8'}
-
-
 snapshots:
-
-  debug@4.4.3:
-    dependencies:
-      ms: 2.1.3
-
 
   '@babel/code-frame@7.29.7':
     dependencies:
@@ -5203,7 +5190,7 @@ snapshots:
 
   axios@1.20.0(debug@4.4.3(supports-color@7.2.0))(supports-color@7.2.0):
     dependencies:
-      follow-redirects: 1.16.1(debug@4.4.3(supports-color@7.2.0))
+      follow-redirects: 1.16.2(debug@4.4.3(supports-color@7.2.0))
       form-data: 4.0.6
       https-proxy-agent: 5.0.1(supports-color@7.2.0)
       proxy-from-env: 2.1.0
@@ -5257,30 +5244,13 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       content-type: 2.1.0
-      debug: 4.4.3
+      debug: 4.4.3(supports-color@7.2.0)
       http-errors: 2.0.1
       iconv-lite: 0.7.3
       on-finished: 2.4.1
       qs: 6.16.1
       raw-body: 3.0.2
       type-is: 2.1.0
-    transitivePeerDependencies:
-      - supports-color
-
-  body-parser@1.20.9:
-    dependencies:
-      bytes: 3.1.2
-      content-type: 1.0.5
-      debug: 2.6.9
-      depd: 2.0.0
-      destroy: 1.2.0
-      http-errors: 2.0.1
-      iconv-lite: 0.4.24
-      on-finished: 2.4.1
-      qs: 6.16.1
-      raw-body: 2.5.3
-      type-is: 1.6.18
-      unpipe: 1.0.0
     transitivePeerDependencies:
       - supports-color
 
@@ -5610,7 +5580,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  follow-redirects@1.16.1(debug@4.4.3(supports-color@7.2.0)):
+  follow-redirects@1.16.2(debug@4.4.3(supports-color@7.2.0)):
     optionalDependencies:
       debug: 4.4.3(supports-color@7.2.0)
 
@@ -5904,6 +5874,11 @@ snapshots:
       ipaddr.js: 1.9.1
 
   proxy-from-env@2.1.0: {}
+
+  qs@6.16.1:
+    dependencies:
+      es-define-property: 1.0.1
+      side-channel: 1.1.1
 
   range-parser@1.2.1: {}
 
@@ -6338,11 +6313,3 @@ snapshots:
     optional: true
 
   zod@4.6.6: {}
-
-  qs@6.16.1:
-    dependencies:
-      es-define-property: 1.0.1
-      side-channel: 1.1.1
-
-  media-typer@1.1.0: {}
-
