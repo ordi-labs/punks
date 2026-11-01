@@ -1,7 +1,7 @@
 {
-  "name": "Ordinal Punks / Ledger",
-  "short_name": "Ordinal Punks",
-  "description": "A visual index of 10,000 Ordinal Punks on Fractal Bitcoin.",
+  "name": "Punks / Ledger",
+  "short_name": "Punks",
+  "description": "A visual index of 10,000 Punks inscriptions on Fractal Bitcoin.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
@@ -9,9 +9,15 @@
   "theme_color": "#F7931A",
   "icons": [
     {
-      "src": "./assets/brand/ordinal-ledger-mark.webp",
-      "sizes": "any",
-      "type": "image/webp",
+      "src": "./assets/brand/punks/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/brand/punks/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

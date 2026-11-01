@@ -1,10 +1,11 @@
-# Ordinal Punks Collection
+# Punks
 
-A production-ready visual archive for the **10,000 Ordinal Punks inscribed on Fractal Bitcoin**. The site combines a local collection catalogue with live market data, inscription metadata, UniSat wallet operations, transfer tooling, inscription preparation, and UniScan links.
+A production-ready visual archive for the **10,000 Punks inscribed on Fractal Bitcoin**. The site combines a local collection catalogue with live market data, inscription metadata, UniSat wallet operations, transfer tooling, inscription preparation, and UniScan links.
 
 ## Production site
 
 - **Live application:** https://ordi-labs.github.io/punks/
+- **Brand:** the Punks logo is used consistently for browser icons, bookmarks, social sharing, and installable mobile/desktop app surfaces.
 - **Repository:** https://github.com/ordi-labs/punks
 - **Shared live Worker:** https://fractal-ordinal-live.servostar23.workers.dev
 
