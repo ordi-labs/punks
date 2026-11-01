@@ -2,15 +2,19 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
+  Bookmark,
   ChevronLeft,
   ChevronRight,
+  Download,
   ExternalLink,
   Filter,
   Heart,
   Loader2,
   Search,
+  Share2,
   X,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -39,7 +43,7 @@ const BUILD_META = import.meta.env as ImportMetaEnv & {
 };
 const GITHUB_BUILD_SHA = BUILD_META.VITE_GITHUB_SHA ?? "";
 const GITHUB_BUILD_DATE = BUILD_META.VITE_GITHUB_COMMIT_DATE ?? "";
-const GITHUB_REPOSITORY_URL = "https://github.com/Demro-Labs/ordinal-punks-collection";
+const GITHUB_REPOSITORY_URL = "https://github.com/ordi-labs/punks";
 
 const PER_PAGE = 20;
 const TOTAL_ITEMS = 10000;
@@ -49,8 +53,8 @@ const HERO_AVIF_URL = `${ASSET_BASE}assets/brand/ordinal-punks-hero.avif`;
 const HERO_MOBILE_AVIF_URL = `${ASSET_BASE}assets/brand/ordinal-punks-hero-mobile.avif`;
 const PAPER_URL = `${ASSET_BASE}assets/brand/ordinal-ledger-paper-texture.webp`;
 const FRACTAL_ORDINALS_URL = `${ASSET_BASE}assets/brand/fractal-ordinals.jpeg`;
-const MARK_URL = `${ASSET_BASE}assets/brand/ordinal-punks-bitcoin.svg`;
-const STAMP_URL = `${ASSET_BASE}assets/brand/ordinal-punks-bitcoin.svg`;
+const MARK_URL = `${ASSET_BASE}assets/brand/punks/punks-logo.png`;
+const STAMP_URL = MARK_URL;
 const SOCIAL_ASSET_BASE = `${ASSET_BASE}assets/brand/social/`;
 const PUNKS_IMAGE_BASE = `${ASSET_BASE}assets/ordinal-punks/images/`;
 
@@ -66,6 +70,10 @@ type PunkRecord = {
   row: number;
 };
 type FilterKey = "Sex" | "Skin Tone";
+type InstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+};
 
 function getTrait(record: PunkRecord, label: string) {
   return (
@@ -354,6 +362,7 @@ export default function Home() {
   const galleryRef = useRef<HTMLElement>(null);
   const marketRef = useRef<HTMLDivElement>(null);
   const [marketReady, setMarketReady] = useState(false);
+  const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [snapshotDate, setSnapshotDate] = useState("");
   const [favorites, setFavorites] = useState<Set<string>>(() => {
     try {
@@ -367,6 +376,44 @@ export default function Home() {
     if (next.has(id)) next.delete(id); else next.add(id);
     return next;
   });
+  useEffect(() => {
+    const handleInstallPrompt = (event: Event) => {
+      event.preventDefault();
+      setInstallPrompt(event as InstallPromptEvent);
+    };
+    window.addEventListener("beforeinstallprompt", handleInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleInstallPrompt);
+  }, []);
+  const sharePunks = async () => {
+    const shareData = { title: "Punks", text: "Explore Punks on Bitcoin and Fractal Bitcoin.", url: window.location.href };
+    if (navigator.share) {
+      try { await navigator.share(shareData); } catch { /* sharing cancelled */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Punks link copied");
+    } catch {
+      toast.info("Copy the Punks URL from your browser address bar");
+    }
+  };
+  const bookmarkPunks = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success("Punks link copied — add it to your bookmarks");
+    } catch {
+      toast.info("Use your browser’s bookmark shortcut to save Punks");
+    }
+  };
+  const installPunks = async () => {
+    if (!installPrompt) {
+      toast.info("Use your browser menu to install or add Punks to your home screen");
+      return;
+    }
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    setInstallPrompt(null);
+  };
   useEffect(() => {
     const controller = new AbortController();
     let active = true;
@@ -565,25 +612,34 @@ export default function Home() {
           <a
             href="#top"
             className="group flex items-center gap-3"
-            aria-label="Ordinal Punks Collection, back to top"
+            aria-label="Punks Collection, back to top"
           >
             <img
               src={MARK_URL}
-              alt="Ordinal Punks Bitcoin-orange logo"
+              alt="Punks logo"
               className="h-10 w-10 object-contain transition-transform duration-200 group-hover:rotate-3"
             />
             <span className="hidden items-baseline gap-2 font-display tracking-[-0.04em] sm:flex">
-              <span className="text-lg font-semibold">Ordinal Punks</span>
+              <span className="text-lg font-semibold">Punks</span>
               <span className="text-[#d99a54]">/</span>
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9ea7b3]">
                 Ledger
               </span>
             </span>
           </a>
-          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.14em] text-[#9ea7b3] sm:gap-6">
+          <div className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#9ea7b3] sm:gap-3">
+            <button type="button" onClick={() => void sharePunks()} className="inline-flex h-9 items-center gap-1.5 border border-[#3b434d] px-2.5 text-[#d9d3c6] transition-colors hover:border-[#d99a54] hover:text-[#f2bd63]" aria-label="Share Punks" title="Share Punks">
+              <Share2 size={14} /><span className="hidden xl:inline">Share</span>
+            </button>
+            <button type="button" onClick={() => void bookmarkPunks()} className="inline-flex h-9 items-center gap-1.5 border border-[#3b434d] px-2.5 text-[#d9d3c6] transition-colors hover:border-[#d99a54] hover:text-[#f2bd63]" aria-label="Bookmark Punks" title="Bookmark Punks">
+              <Bookmark size={14} /><span className="hidden xl:inline">Bookmark</span>
+            </button>
+            <button type="button" onClick={() => void installPunks()} className="inline-flex h-9 items-center gap-1.5 border border-[#d99a54]/70 px-2.5 text-[#f2bd63] transition-colors hover:bg-[#d99a54]/10" aria-label="Install Punks" title="Install Punks as an app">
+              <Download size={14} /><span className="hidden xl:inline">Install</span>
+            </button>
             <DonateButton compact />
             <OrdiWallet site="punks" />
-            <span className="hidden sm:inline">Fractal Bitcoin</span>
+            <span className="hidden 2xl:inline">Fractal Bitcoin</span>
             <a
               className="inline-flex items-center gap-1.5 text-[#f3efe5] underline decoration-[#d99a54] underline-offset-4 transition-colors hover:text-[#d99a54]"
               href="https://fractal.unisat.io/market/collection?collectionId=opunk"
@@ -601,7 +657,7 @@ export default function Home() {
           <a href="#local-vault" className="shrink-0 rounded-md px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#aeb7c1] transition-colors hover:bg-white/[0.04] hover:text-[#f3efe5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d7b77b]">Wallet &amp; Vault</a>
           <a href="#live-market" className="shrink-0 rounded-md px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#aeb7c1] transition-colors hover:bg-white/[0.04] hover:text-[#f3efe5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d7b77b]">Live market</a>
           <span className="ml-auto hidden shrink-0 font-mono text-[9px] uppercase tracking-[0.16em] text-[#657080] md:inline">10,000 inscribed pieces</span>
-          <a href="https://github.com/Demro-Labs/ordinal-punks-collection" target="_blank" rel="noreferrer" className="shrink-0 rounded-md px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#aeb7c1] transition-colors hover:text-[#d7b77b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d7b77b]">Repository ↗</a>
+          <a href={GITHUB_REPOSITORY_URL} target="_blank" rel="noreferrer" className="shrink-0 rounded-md px-3 py-2 font-mono text-[10px] uppercase tracking-[0.14em] text-[#aeb7c1] transition-colors hover:text-[#d7b77b] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#d7b77b]">Repository ↗</a>
         </div>
       </nav>
       <div id="local-vault" className="scroll-mt-20">
@@ -1056,7 +1112,7 @@ export default function Home() {
               <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
                 <div className="max-w-md">
                   <p className="flex items-baseline gap-2 font-display tracking-[-0.04em]">
-                    <span className="text-lg font-semibold">Ordinal Punks</span>
+                    <span className="text-lg font-semibold">Punks</span>
                     <span className="text-[#d99a54]">/</span>
                     <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.2em] text-[#9ea7b3]">
                       Ledger
@@ -1218,7 +1274,7 @@ export default function Home() {
                     },
                     {
                       label: "GitHub",
-                      href: "https://github.com/Demro-Labs/ordinal-punks-collection",
+                      href: GITHUB_REPOSITORY_URL,
                       src: `${SOCIAL_ASSET_BASE}github.svg`,
                     },
                   ].map(partner => (
@@ -1243,7 +1299,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-2 font-mono text-[10px] leading-5 text-[#718092] sm:flex-row sm:items-center sm:justify-between">
                 <p>
-                  Copyright © 2026 Ordinal Punks Ledger. All rights reserved.
+                  Copyright © 2026 Punks Ledger. All rights reserved.
                 </p>
                 <p>Built for Fractal Bitcoin / Collection ID: opunk</p>
                 <p>

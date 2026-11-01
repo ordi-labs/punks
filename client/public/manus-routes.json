@@ -1,0 +1,12 @@
+{
+  "routes": [
+    {
+      "path": "/",
+      "title": "Punks / Ledger"
+    },
+    {
+      "path": "/404",
+      "title": "Punks / Not found"
+    }
+  ]
+}
