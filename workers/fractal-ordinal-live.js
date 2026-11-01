@@ -1050,7 +1050,9 @@ async function spendableUtxos(request, env, corsHeaders) {
       rejectedSats.invalidFlags += satoshi;
       continue;
     }
-    if (!Array.isArray(item?.inscriptions) || item.inscriptions.length !== 0) {
+    // all-utxo-data may omit inline inscription metadata when it is not indexed;
+    // the verified per-outpoint detail below must still explicitly confirm an empty list.
+    if (item?.inscriptions !== undefined && (!Array.isArray(item.inscriptions) || item.inscriptions.length !== 0)) {
       rejected.hasInscriptionOrUnknown += 1;
       rejectedSats.hasInscriptionOrUnknown += satoshi;
       continue;
