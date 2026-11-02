@@ -88,11 +88,11 @@ describe("native UniSat wallet actions", () => {
   });
 
   it("accepts a Worker-verified, confirmed, uninscribed fee UTXO large enough for the transfer", async () => {
-    mocks.getSpendableUtxos.mockResolvedValue([{ address: "bc1qwallet", txid: "d".repeat(64), vout: 1, satoshi: 2_000 }]);
+    mocks.getSpendableUtxos.mockResolvedValue([{ address: "bc1qwallet", txid: "d".repeat(64), vout: 1, satoshi: 100_000 }]);
     await expect(ensureNativeInscriptionFeeBalance(
       "BITCOIN_MAINNET", "bc1qwallet", { location: INSCRIPTION_LOCATION }, 3,
     )).resolves.toBeUndefined();
-    expect(mocks.getSpendableUtxos).toHaveBeenCalledWith("BITCOIN_MAINNET", "bc1qwallet", 1_650, { mobile: true, collectAll: false, minimumUtxoSats: 1_650 });
+    expect(mocks.getSpendableUtxos).toHaveBeenCalledWith("BITCOIN_MAINNET", "bc1qwallet", 100_000, { mobile: true, collectAll: false, minimumUtxoSats: 100_000 });
   });
   it("rejects the Ordinal outpoint itself even if the safe service erroneously returns it", async () => {
     mocks.getSpendableUtxos.mockResolvedValue([{ address: "bc1qwallet", txid: "c".repeat(64), vout: 0, satoshi: 20_000 }]);
@@ -104,7 +104,7 @@ describe("native UniSat wallet actions", () => {
     mocks.getSpendableUtxos.mockResolvedValue([{ address: "bc1qwallet", txid: "d".repeat(64), vout: 1, satoshi: 1_000 }]);
     await expect(ensureNativeInscriptionFeeBalance(
       "BITCOIN_MAINNET", "bc1qwallet", { location: INSCRIPTION_LOCATION }, 3,
-    )).rejects.toThrow(/Add at least 650 more BTC sats.*confirmed.*no inscription.*No transaction was signed or broadcast/);
+    )).rejects.toThrow(/Add at least 99,000 more BTC sats.*confirmed.*no inscription.*No transaction was signed or broadcast/);
   });
   it("fails closed with explicit funding guidance when no safe UTXOs are returned", async () => {
     mocks.getSpendableUtxos.mockResolvedValue([]);
