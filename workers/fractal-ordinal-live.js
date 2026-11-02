@@ -49,7 +49,6 @@ const MAX_INSCRIBE_FILE_BYTES = 365 * 1024;
 const MAX_INSCRIBE_BODY_BYTES = 95_000_000;
 const MAX_UTXO_CONFIRM_BODY_BYTES = 20_000;
 const MAX_UTXO_CONFIRM_INPUTS = 20;
-const MAX_UTXO_CONFIRM_LEGACY_SCAN_PAGES = 20;
 const MAX_UTXO_CONFIRM_CURSOR = 1_000_000;
 const UTXO_CONFIRM_PAGE_SIZE = 25;
 const MAX_BRC20_PROG_ACTIVATION_BODY_BYTES = 100_000;
@@ -931,12 +930,11 @@ async function utxoAvailabilityDiagnostics(request, env, corsHeaders) {
   const base = chain === 'bitcoin' ? BITCOIN_API_BASE : API_BASE;
   const noStore = { ...corsHeaders, 'Cache-Control': 'no-store' };
   const pageSize = 25;
-  const maxPages = 40000;
   try {
     // Read-only reconciliation walks every UniSat cursor page; it never authorizes spending.
     const fetchAllPages = async (kind) => {
       const rows = []; const seen = new Set(); let cursor = 0; let expectedTotal = null;
-      for (let pageNumber = 0; pageNumber < maxPages; pageNumber += 1) {
+      for (;;) {
         const payload = await uniNetwork(base, '/v1/indexer/address/' + encodeURIComponent(address) + '/' + kind + '?cursor=' + cursor + '&size=' + pageSize, env, { signal: AbortSignal.timeout(10000) });
         if (!Array.isArray(payload?.utxo) || payload.utxo.length > pageSize) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INVALID_RESPONSE');
         const reportedCursor = payload.cursor === undefined ? cursor : Number(payload.cursor);
@@ -1281,8 +1279,7 @@ async function confirmSpendableUtxos(request, env, corsHeaders) {
       sourceTotal = null;
       scanComplete = false;
       try {
-        const maxPages = Math.ceil((MAX_UTXO_CONFIRM_CURSOR + UTXO_CONFIRM_PAGE_SIZE) / UTXO_CONFIRM_PAGE_SIZE);
-        for (let page = 0; page < maxPages; page += 1) {
+        for (;;) {
           const { raw, total } = await fetchAvailablePage(cursor, expectedTotal);
           sourceTotal = total;
           expectedTotal ??= total;

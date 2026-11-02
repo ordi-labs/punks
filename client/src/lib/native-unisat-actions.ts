@@ -86,6 +86,8 @@ function requireTxid(result: unknown, action: string) {
   return txid.toLowerCase();
 }
 
+const MINIMUM_SAFE_FEE_UTXO_SATS = 100_000;
+
 /** Mobile-only preflight: require one confirmed, verified asset-free fee UTXO separate from the Ordinal. */
 export async function ensureNativeInscriptionFeeBalance(
   networkEnum: string,
@@ -97,8 +99,8 @@ export async function ensureNativeInscriptionFeeBalance(
     ? "Bitcoin"
     : networkEnum === "FRACTAL_BITCOIN_MAINNET" ? "Fractal Bitcoin" : "selected network";
   const feeAsset = networkEnum === "BITCOIN_MAINNET" ? "BTC" : "FB";
-  // Conservative estimate for the transfer plus a non-dust change output.
-  const minimumFeeBalance = Math.max(1_000, Math.ceil(feeRate * 350) + 600);
+  // Require a meaningful separate fee UTXO; never accept the old 1,000-sat floor.
+  const minimumFeeBalance = Math.max(MINIMUM_SAFE_FEE_UTXO_SATS, Math.ceil(feeRate * 350) + 600);
   const location = typeof inscription.location === "string" ? inscription.location : "";
   const inscriptionOutpoint = location.match(/^([a-f0-9]{64}):(\d+)(?::\d+)?$/i);
   let verifiedUtxos: Awaited<ReturnType<typeof getSpendableUtxos>>;
