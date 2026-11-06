@@ -12,6 +12,7 @@ type ScanRow = {
   safeSats: number | null;
   safeUtxos: number | null;
   totalUtxos: number | null;
+  summaryTotalUtxos: number | null;
   availableUtxos: number | null;
   unavailableUtxos: number | null;
   availableSats: number | null;
@@ -64,7 +65,7 @@ export function LocalVaultSafeBalanceDiscovery({ wallet, network, selectedAddres
         if (!address) {
           results.push({
             type: spec.type, address, confirmedSats: null, pendingSats: null, totalSats: null,
-            safeSats: null, safeUtxos: null, totalUtxos: null, availableUtxos: null,
+            safeSats: null, safeUtxos: null, totalUtxos: null, summaryTotalUtxos: null, availableUtxos: null,
             unavailableUtxos: null, availableSats: null, unavailableSats: null,
             balanceError: "Adresse absente du coffre.", inventoryError: "Adresse absente du coffre.", safeError: "Adresse absente du coffre.",
           });
@@ -86,7 +87,8 @@ export function LocalVaultSafeBalanceDiscovery({ wallet, network, selectedAddres
           totalSats: balanceResult.status === "fulfilled" ? balanceResult.value.total : null,
           safeSats: null,
           safeUtxos: null,
-          totalUtxos: summaryResult.status === "fulfilled" ? summaryResult.value.totalUtxoCount : null,
+          totalUtxos: null,
+          summaryTotalUtxos: summaryResult.status === "fulfilled" ? summaryResult.value.totalUtxoCount : null,
           availableUtxos: summaryResult.status === "fulfilled" ? summaryResult.value.availableUtxoCount : null,
           unavailableUtxos: summaryResult.status === "fulfilled" ? summaryResult.value.unavailableUtxoCount : null,
           availableSats: summaryResult.status === "fulfilled" ? summaryResult.value.availableBalance : null,
@@ -107,7 +109,7 @@ export function LocalVaultSafeBalanceDiscovery({ wallet, network, selectedAddres
               setProgress(`${label} · inventaire ${scan.scannedCount.toLocaleString("fr-FR")}/${scan.totalCount.toLocaleString("fr-FR")}`);
             },
           });
-          row = { ...row, inventoryScannedUtxos: inventory.scannedCount, inventoryTotalUtxos: inventory.totalCount };
+          row = { ...row, inventoryScannedUtxos: inventory.scannedCount, inventoryTotalUtxos: inventory.totalCount, totalUtxos: inventory.totalCount };
           // L’inventaire complet et le résumé agrégé UniSat peuvent couvrir des ensembles différents.
           // La complétude est vérifiée par la pagination; les UTXO sûrs restent validés séparément.
         } catch (error) {
@@ -188,7 +190,7 @@ export function LocalVaultSafeBalanceDiscovery({ wallet, network, selectedAddres
             <p className="font-mono text-[10px] text-[#f2bd63]">{row.totalSats === null ? "Solde total indisponible" : `Total ${row.totalSats.toLocaleString("fr-FR")} sats`}</p>
           </div>
           <div className="mt-2 grid gap-1 sm:grid-cols-2">
-            <p className="font-mono text-[9px] text-[#9ea7b3]">UTXO indexés : {row.totalUtxos === null ? "—" : row.totalUtxos} · disponibles UniSat : {row.availableUtxos === null ? "—" : row.availableUtxos} · indisponibles : {row.unavailableUtxos === null ? "—" : row.unavailableUtxos}</p>
+            <p className="font-mono text-[9px] text-[#9ea7b3]">Inventaire complet : {row.totalUtxos === null ? "—" : row.totalUtxos.toLocaleString("fr-FR")} UTXO · résumé UniSat : {row.summaryTotalUtxos === null ? "—" : row.summaryTotalUtxos.toLocaleString("fr-FR")} · disponibles : {row.availableUtxos === null ? "—" : row.availableUtxos} · indisponibles : {row.unavailableUtxos === null ? "—" : row.unavailableUtxos}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">Inventaire UTXO parcouru : {row.inventoryScannedUtxos === undefined ? "—" : `${row.inventoryScannedUtxos.toLocaleString("fr-FR")} / ${row.inventoryTotalUtxos?.toLocaleString("fr-FR")}`}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">UTXO indexés examinés par le contrôle de sûreté : {row.scannedUtxos === undefined ? "—" : `${row.scannedUtxos.toLocaleString("fr-FR")} / ${row.scanTotalUtxos?.toLocaleString("fr-FR")}`}</p>
             <p className="font-mono text-[9px] text-[#9ea7b3]">Sats disponibles UniSat : {row.availableSats === null ? "—" : `${row.availableSats.toLocaleString("fr-FR")} sats`} · indisponibles : {row.unavailableSats === null ? "—" : `${row.unavailableSats.toLocaleString("fr-FR")} sats`}</p>

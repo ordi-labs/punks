@@ -933,7 +933,7 @@ async function utxoAvailabilityDiagnostics(request, env, corsHeaders) {
   try {
     // Read-only reconciliation walks every UniSat cursor page; it never authorizes spending.
     const fetchAllPages = async (kind) => {
-      const rows = []; const seen = new Set(); let cursor = 0; let expectedTotal = null;
+      const rows = []; const seen = new Set(); let cursor = 0; let expectedTotal = null; let pageNumber = 0;
       for (;;) {
         const payload = await uniNetwork(base, '/v1/indexer/address/' + encodeURIComponent(address) + '/' + kind + '?cursor=' + cursor + '&size=' + pageSize, env, { signal: AbortSignal.timeout(10000) });
         if (!Array.isArray(payload?.utxo) || payload.utxo.length > pageSize) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INVALID_RESPONSE');
@@ -948,8 +948,9 @@ async function utxoAvailabilityDiagnostics(request, env, corsHeaders) {
           seen.add(key); rows.push(item);
         }
         const nextCursor = cursor + payload.utxo.length;
+        pageNumber += 1;
         const hasMore = expectedTotal !== null ? nextCursor < expectedTotal : payload.utxo.length === pageSize;
-        if (!hasMore) { if (expectedTotal !== null && nextCursor !== expectedTotal) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INCOMPLETE_SCAN'); return { rows, total: expectedTotal, pages: pageNumber + 1 }; }
+        if (!hasMore) { if (expectedTotal !== null && nextCursor !== expectedTotal) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INCOMPLETE_SCAN'); return { rows, total: expectedTotal, pages: pageNumber }; }
         if (payload.utxo.length === 0 || nextCursor <= cursor || nextCursor > 1000000) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_CURSOR_STALLED');
         cursor = nextCursor;
       }
