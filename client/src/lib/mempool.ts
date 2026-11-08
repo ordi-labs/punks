@@ -48,7 +48,7 @@ async function requestJson<T>(url: string, timeoutMs = 8_000, init?: RequestInit
           const outpoints = missing.length ? ` Entrées non retrouvées dans l’index UniSat : ${missing.join(", ")}.` : "";
           throw new Error(`UTXO_CONFIRM_NOT_IN_AVAILABLE_SET: après deux scans, une ou plusieurs entrées PSBT ne figurent toujours pas dans l’ensemble UTXO disponibles et sûrs.${outpoints} Actualisez les UTXO et reconstruisez le PSBT à partir des sorties sûres actuelles. Ne réutilisez pas ces entrées sans confirmation; aucune signature ni diffusion n’a été effectuée.`);
         }
-        if (failure?.code === "UTXO_CONFIRM_SCAN_LIMIT_REACHED" || failure?.code === "UTXO_CONFIRM_AVAILABLE_SCAN_INCOMPLETE") {
+        if (failure?.code === "UTXO_CONFIRM_CURSOR_UNSAFE" || failure?.code === "UTXO_CONFIRM_AVAILABLE_SCAN_INCOMPLETE" || failure?.code === "UTXO_CONFIRM_SCAN_INCOMPLETE") {
           throw new Error("La revalidation du scan UTXO n’a pas pu atteindre une page confirmée par l’indexeur. Actualisez les UTXO et reconstruisez le PSBT; aucune signature ni diffusion n’a été effectuée.");
         }
         if (

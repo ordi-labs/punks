@@ -17,8 +17,6 @@ type ActiveUtxo = {
 };
 type UtxoPage = { chain: string; address: string; cursor: number; nextCursor: number; total: number; totalKnown?: boolean; hasMore?: boolean; scannedCount: number; utxo: ActiveUtxo[] };
 const PAGE_SIZE = 25;
-// Keep in sync with the Worker cursor validation for /api/address-utxos.
-const MAX_UTXO_CURSOR = 1_000_000;
 const MAX_UTXO_REQUESTS_PER_MINUTE = 120;
 const UTXO_REQUEST_WINDOW_MS = 60_000;
 const short = (value: string) => `${value.slice(0, 10)}…${value.slice(-8)}`;
@@ -89,8 +87,8 @@ export function LocalVaultActiveUtxosPanel({ address, network }: { address: stri
         total = body.total;
         cursor = body.nextCursor;
         if (!hasMore) break;
-        if (body.scannedCount === 0 || cursor > MAX_UTXO_CURSOR || total > MAX_UTXO_CURSOR) {
-          throw new Error(`Scan UTXO incomplet : ${cursor} sorties vérifiées; l’indexeur n’a pas avancé ou sa limite de curseur (1 000 000) est atteinte. Aucune liste partielle n’est affichée.`);
+        if (body.scannedCount === 0) {
+          throw new Error(`Scan UTXO incomplet : ${cursor} sorties vérifiées; l’indexeur n’a pas avancé. Aucune liste partielle n’est affichée.`);
         }
       }
       setItems(collected);

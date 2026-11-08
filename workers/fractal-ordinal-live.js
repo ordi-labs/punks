@@ -49,7 +49,8 @@ const MAX_INSCRIBE_FILE_BYTES = 365 * 1024;
 const MAX_INSCRIBE_BODY_BYTES = 95_000_000;
 const MAX_UTXO_CONFIRM_BODY_BYTES = 20_000;
 const MAX_UTXO_CONFIRM_INPUTS = 20;
-const MAX_UTXO_CONFIRM_CURSOR = 1_000_000;
+// No artificial page-count cap: the scanner continues until hasMore=false.
+const MAX_UTXO_CURSOR = Number.MAX_SAFE_INTEGER;
 const UTXO_CONFIRM_PAGE_SIZE = 25;
 const MAX_BRC20_PROG_ACTIVATION_BODY_BYTES = 100_000;
 const MAX_BRC20_PROG_ACTIVATION_INPUTS = 20;
@@ -857,7 +858,7 @@ async function addressUtxos(request, env, corsHeaders) {
   const url = new URL(request.url);
   const chain = url.searchParams.get('chain') || '';
   const address = url.searchParams.get('address') || '';
-  const cursor = parseBoundedInteger(url.searchParams.get('cursor'), 0, 1000000);
+  const cursor = parseBoundedInteger(url.searchParams.get('cursor'), 0, MAX_UTXO_CURSOR);
   const size = parseBoundedInteger(url.searchParams.get('size'), 25, 25);
   if (!['bitcoin', 'fractal'].includes(chain) || !validWalletAddress(address) || cursor === null || size === null || size < 1) {
     return Response.json({ error: 'Invalid active UTXO query.', code: 'INVALID_QUERY' }, { status: 400, headers: { ...corsHeaders, 'Cache-Control': 'no-store' } });
@@ -947,14 +948,14 @@ async function utxoAvailabilityDiagnostics(request, env, corsHeaders) {
           if (!key || seen.has(key)) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INVALID_OUTPOINT');
           seen.add(key); rows.push(item);
         }
+        pages += 1;
         const nextCursor = cursor + payload.utxo.length;
         pageNumber += 1;
         const hasMore = expectedTotal !== null ? nextCursor < expectedTotal : payload.utxo.length === pageSize;
         if (!hasMore) { if (expectedTotal !== null && nextCursor !== expectedTotal) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INCOMPLETE_SCAN'); return { rows, total: expectedTotal, pages: pageNumber }; }
-        if (payload.utxo.length === 0 || nextCursor <= cursor || nextCursor > 1000000) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_CURSOR_STALLED');
+        if (payload.utxo.length === 0 || nextCursor <= cursor || nextCursor > MAX_UTXO_CURSOR) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_CURSOR_STALLED');
         cursor = nextCursor;
       }
-      throw new SpendableUtxoError('UTXO_DIAGNOSTIC_PAGE_LIMIT_REACHED');
     };
     const results = await Promise.all([fetchAllPages('all-utxo-data'), fetchAllPages('available-utxo-data')]);
     const all = results[0]; const available = results[1]; const allByKey = new Map();
@@ -975,7 +976,7 @@ async function spendableUtxos(request, env, corsHeaders) {
   const url = new URL(request.url);
   const chain = url.searchParams.get('chain') || '';
   const address = url.searchParams.get('address') || '';
-  const cursor = parseBoundedInteger(url.searchParams.get('cursor'), 0, 1000000);
+  const cursor = parseBoundedInteger(url.searchParams.get('cursor'), 0, MAX_UTXO_CURSOR);
   const requestedSize = parseBoundedInteger(url.searchParams.get('size'), 25, 25);
   if (!['bitcoin', 'fractal'].includes(chain) || !validWalletAddress(address) || cursor === null || requestedSize === null || requestedSize < 1) throw new SpendableUtxoError('INVALID_QUERY', 400);
   const base = chain === 'bitcoin' ? BITCOIN_API_BASE : API_BASE;
@@ -1176,7 +1177,7 @@ async function confirmSpendableUtxos(request, env, corsHeaders) {
     const sourceCursor = candidate?.sourceCursor === undefined ? null : candidate.sourceCursor;
     const key = `${txid}:${vout}`;
     if (!/^[a-f0-9]{64}$/.test(txid) || !Number.isSafeInteger(vout) || vout < 0 || !/^(?:[a-f0-9]{2})+$/.test(scriptPk) || !Number.isSafeInteger(satoshi) || satoshi < minimumSpendableSatsForScript(scriptPk) ||
-        (sourceCursor !== null && (typeof sourceCursor !== 'number' || !Number.isSafeInteger(sourceCursor) || sourceCursor < 0 || sourceCursor > MAX_UTXO_CONFIRM_CURSOR || sourceCursor % UTXO_CONFIRM_PAGE_SIZE !== 0)) || candidateByOutpoint.has(key)) {
+        (sourceCursor !== null && (typeof sourceCursor !== 'number' || !Number.isSafeInteger(sourceCursor) || sourceCursor < 0 || sourceCursor > MAX_UTXO_CURSOR || sourceCursor % UTXO_CONFIRM_PAGE_SIZE !== 0)) || candidateByOutpoint.has(key)) {
       throw new SpendableUtxoError('UTXO_CONFIRM_INVALID_CANDIDATE', 400);
     }
     candidateByOutpoint.set(key, { txid, vout, satoshi, scriptPk, sourceCursor });
@@ -1191,7 +1192,7 @@ async function confirmSpendableUtxos(request, env, corsHeaders) {
   const candidatePageCursors = allCandidatesHaveCursor
     ? [...new Set([...candidateByOutpoint.values()].flatMap(candidate =>
         Array.from({ length: 11 }, (_, index) => candidate.sourceCursor + (index - 5) * UTXO_CONFIRM_PAGE_SIZE)
-          .filter(value => value >= 0 && value <= MAX_UTXO_CONFIRM_CURSOR)
+          .filter(value => value >= 0 && value <= MAX_UTXO_CURSOR)
       ))].sort((left, right) => left - right)
     : null;
   let sourceTotal = null;
@@ -1289,14 +1290,13 @@ async function confirmSpendableUtxos(request, env, corsHeaders) {
           const nextCursor = cursor + raw.length;
           if (raw.length === 0) {
             if (cursor < total) {
-              if (cursor >= MAX_UTXO_CONFIRM_CURSOR) throw new SpendableUtxoError('UTXO_CONFIRM_SCAN_LIMIT_REACHED', 409);
               throw new SpendableUtxoError('UTXO_CONFIRM_AVAILABLE_SCAN_INCOMPLETE', 409);
             }
             scanComplete = true;
             break;
           }
           if (nextCursor === total) { scanComplete = true; break; }
-          if (nextCursor > MAX_UTXO_CONFIRM_CURSOR) throw new SpendableUtxoError('UTXO_CONFIRM_SCAN_LIMIT_REACHED', 409);
+          if (nextCursor > MAX_UTXO_CURSOR) throw new SpendableUtxoError('UTXO_CONFIRM_CURSOR_UNSAFE', 409);
           cursor = nextCursor;
         }
         // UniSat can reorder offset-paginated available outputs without changing `total`.
@@ -1318,7 +1318,7 @@ async function confirmSpendableUtxos(request, env, corsHeaders) {
 
   if (sourceTotal === null) throw new SpendableUtxoError('UTXO_CONFIRM_AVAILABLE_INVALID_RESPONSE');
   if (availableByOutpoint.size !== candidateByOutpoint.size) {
-    if (!scanComplete) throw new SpendableUtxoError('UTXO_CONFIRM_SCAN_LIMIT_REACHED', 409);
+    if (!scanComplete) throw new SpendableUtxoError('UTXO_CONFIRM_SCAN_INCOMPLETE', 409);
     const missingOutpoints = [...candidateByOutpoint.keys()].filter(key => !availableByOutpoint.has(key));
     throw new SpendableUtxoError('UTXO_CONFIRM_NOT_IN_AVAILABLE_SET', 409, { missingOutpoints });
   }
