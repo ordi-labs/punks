@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { Copy, Download, Eye, EyeOff, LockKeyhole, LogOut, QrCode, RefreshCw, ShieldCheck, Wallet, X } from "lucide-react";
+import { Copy, Eye, EyeOff, LockKeyhole, LogOut, QrCode, RefreshCw, ShieldCheck, Wallet, X } from "lucide-react";
 import { UniSatWalletConnect } from "@/components/UniSatWalletConnect";
 import { LocalPsbtSignerPanel } from "@/components/LocalPsbtSignerPanel";
 import { LocalNativeTransferPanel } from "@/components/LocalNativeTransferPanel";
@@ -253,7 +253,6 @@ export function OrdiWallet({ site = "pokedex" }: { site?: "punks" | "pokedex" } 
     <button type="button" onClick={openWallet} className="inline-flex min-h-11 items-center gap-2 border border-[#d99a54]/70 bg-[#d99a54]/10 px-3 py-2 font-mono text-[10px] uppercase tracking-[0.12em] text-[#f2bd63] transition hover:bg-[#d99a54]/20" aria-label="Open Ordi Wallet">
       <Wallet size={15} /> <span>Ordi Wallet</span>{vaultExists && <span className="rounded-full bg-[#70c7a0]/15 px-1.5 py-0.5 text-[8px] text-[#70c7a0]">VAULT</span>}
     </button>
-    {!window.location.protocol.includes("extension") && <a href={`${BASE}extension-install.html`} target="_blank" rel="noreferrer" aria-label="Add Ordi Wallet desktop extension" className="inline-flex min-h-11 w-11 shrink-0 items-center justify-center border border-[#3b434d] font-mono text-[9px] uppercase tracking-[0.08em] text-[#d9d3c6] hover:border-[#d99a54] hover:text-[#f2bd63] sm:w-auto sm:gap-2 sm:px-3 sm:py-2" title="Desktop browser extension preview — not installable in most mobile browsers"><Download size={14} /><span className="hidden sm:inline">Add extension</span></a>}
     {open && createPortal(
       <div className="premium-modal-viewport fixed inset-0 z-[100] flex min-h-[100dvh] items-center justify-center overflow-y-auto bg-[#050608]/90 backdrop-blur-sm" onMouseDown={event => event.target === event.currentTarget && closeWallet()}>
         <section className="wallet-modal-panel premium-modal-panel flex w-full flex-col overflow-hidden border bg-[#0e1217]" role="dialog" aria-modal="true" aria-label="Ordi Wallet">
