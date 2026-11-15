@@ -38,5 +38,3 @@ jobs:
         run: pnpm run build
         env:
           GITHUB_ACTIONS: true
-      - name: Build desktop Local Vault extension
-        run: pnpm run build:extension
