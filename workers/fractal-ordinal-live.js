@@ -948,7 +948,6 @@ async function utxoAvailabilityDiagnostics(request, env, corsHeaders) {
           if (!key || seen.has(key)) throw new SpendableUtxoError('UTXO_DIAGNOSTIC_INVALID_OUTPOINT');
           seen.add(key); rows.push(item);
         }
-        pages += 1;
         const nextCursor = cursor + payload.utxo.length;
         pageNumber += 1;
         const hasMore = expectedTotal !== null ? nextCursor < expectedTotal : payload.utxo.length === pageSize;
